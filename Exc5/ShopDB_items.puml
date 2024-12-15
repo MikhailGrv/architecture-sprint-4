@@ -1,0 +1,40 @@
+@startuml name Shop
+title Кэширование ShopDb список заказов cache-aside
+
+actor customer  as "Customer"
+actor partner  as "Партнер"
+actor sreller as "Seller"
+
+participant ishop as "Internet Shop"
+participant shopApi as "Shop API"
+participant crm as "CRM"
+participant crmApi as "CRM API"
+
+participant cache as "Кэш"
+participant shopDB as "ShopDB"
+
+alt клиент
+    customer->ishop : get список товаров
+    ishop -> shopApi : get список товаров
+else партнер
+    partner -> shopApi : get список товаров
+end 
+
+shopApi -> cache : получить список товаров
+alt список товаров есть в кэш
+    cache --> shopApi : список товаров
+else списка товаров нет в кэш
+    cache --> shopApi : нет в кэш
+    shopApi -> shopDB : получить список товаров
+    shopDB --> shopApi : список товаров
+    shopApi -> cache : список товаров (+ срок актуальности)
+end
+
+alt клиент
+    shopApi --> ishop : спиоск товаров
+else партнер
+    shopApi --> partner : список товаров
+end 
+
+
+@enduml

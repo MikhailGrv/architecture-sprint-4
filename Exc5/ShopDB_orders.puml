@@ -1,0 +1,62 @@
+@startuml name Shop
+title Кэширование ShopDb заказы write-thought
+
+actor customer  as "Customer"
+actor partner  as "Партнер"
+actor sreller as "Seller"
+
+participant ishop as "Internet Shop"
+participant shopApi as "Shop API"
+participant crm as "CRM"
+participant crmApi as "CRM API"
+
+participant cache as "Кэш"
+participant shopDB as "ShopDB"
+
+
+note over shopApi
+    Клиент/партнер идентефицирован (авторизован)
+    Возможно создавать запросы по конкретному пользователю (клиент/партнер)
+end note 
+== Создание заказа ==
+alt клиент
+    customer->ishop : post новый заказ
+    ishop -> shopApi : post новый заказ
+else партнер
+    partner -> shopApi : post новый заказ
+end 
+
+shopApi -> cache : post новый заказ
+cache -> cache : добавление заказа
+cache -> shopDB : добавление заказа
+shopDB --> cache : заказ записан
+cache --> shopApi : заказ записан
+
+alt клиент
+    shopApi --> ishop : 200
+    ishop --> customer : заказ принят
+else партнер
+    shopApi --> partner : 200
+end 
+
+== Получение заказа ==
+
+alt клиент
+    customer->ishop : get список моих заказов
+    ishop -> shopApi :  get список моих заказов
+else партнер
+    partner -> shopApi : get список моих заказов
+end 
+
+shopApi -> cache : get список заказов Пользователя 
+cache --> shopApi : список заказов Пользователя
+
+alt клиент
+    shopApi --> ishop : список заказов клиента
+    ishop --> customer : список заказов
+else партнер
+    shopApi --> partner : список заказов партнера
+end 
+
+
+@enduml
